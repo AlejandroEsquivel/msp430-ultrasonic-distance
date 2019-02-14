@@ -1,0 +1,9 @@
+main.o
+main.elf
+uart/
+msp430ref/
+uart.*
+*.o
+*.elf
+.vscode/
+*.txt
