@@ -2,6 +2,25 @@
 
 The MSP430 (MSP430g2553) was used to create an ultrasonic (HC-SR04) distance meter, the distance measurements are sent via USB-Serial interface to the host computer using UART. 
 
+# Connections
+
+The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
+
+The `P2.0` pin was connected in series with a 1kOhm resistor and to the HC-SR04's ECHO pin.
+
+# Build & Install firmware into MSP430
+
+```
+make
+mspdebug rf2500
+prog ultrasonic.elf
+^D
+```
+Where `^D` is [CTRL-D].
+
+The MSP430 should start sending distance measurements to the host computer.
+
+If you don't have a msp430 C compiler, look at `Installation of Dependencies` below.
 
 # Installation of Dependencies
 
@@ -61,20 +80,3 @@ We require python 2.7 (https://www.python.org/downloads/mac-osx/)
 sudo port install xorg-server py27-serial py27-pygtk py27-numpy
 sudo port install py27-matplotlib +gtk2
 ```
-
-# Connections
-
-The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
-The `P2.0` pin was connected in series with a 1kOhm resistor and to the HC-SR04's ECHO pin.
-
-# Build & Install firmware into MSP430
-
-```
-make
-mspdebug rf2500
-prog ultrasonic.elf
-^D
-```
-Where `^D` is [CTRL-D].
-
-The MSP430 should start sending distance measurements to the host computer
