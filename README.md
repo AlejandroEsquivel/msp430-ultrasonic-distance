@@ -60,7 +60,7 @@ make
 sudo make install
 ```
 
-Download MSP430 Driver at https://github.com/energia/Energia/raw/gh-pages/files/ MSP430LPCDC-1.0.3b.zip
+Download MSP430 Driver at https://github.com/energia/Energia/raw/gh-pages/files/MSP430LPCDC-1.0.3b.zip
 and install.
 
 ### MSP430 C Compiler
