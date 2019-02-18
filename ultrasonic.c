@@ -9,7 +9,7 @@
 #define TXD           BIT2 // TXD on P1.2EnableCapture
 #define RXD           BIT1 // RXD on P1.1
 
-unsigned int timer_reset = 0;
+volatile unsigned int timer_reset_count = 0;
 
 
 void write_uart_byte(char value){
@@ -39,7 +39,7 @@ __interrupt void ta1_isr (void)
   void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) ta1_isr (void)
 #endif
 {
-  timer_reset++;
+  timer_reset_count++;
   TACCTL1 &= ~CCIFG; // reset the interrupt flag
 }
 
@@ -82,6 +82,10 @@ void init_timer(void){
   TACTL |= TASSEL_2 + MC_2 + ID_0;
 }
 
+void reset_timer(void){
+  TACTL |= TACLR;
+}
+
 void main(void){
 
 	WDTCTL = WDTPW + WDTHOLD;		// Stop Watch Dog Timer
@@ -100,7 +104,7 @@ void main(void){
 
   unsigned int prev_echo_val = 0;
   unsigned int curr_echo_val;
-  unsigned int cont = 1;
+  unsigned int measurement = 1;
   unsigned long start_time;
   unsigned long end_time;
   unsigned long distance;
@@ -109,38 +113,41 @@ void main(void){
 
 	while (1)
 	{
-    //write_uart(TAR);
 		P2OUT |= TRIG_PIN; // Enable TRIGGER
 		__delay_cycles(10); // Send pulse for 10us
 		P2OUT &= ~TRIG_PIN; // Disable TRIGGER
 
-    cont = 1;
-    while(cont){
+    //enter while loop for measurement
+    measurement = 1;
+
+    while(measurement){
       curr_echo_val = P2IN & ECHO_PIN;
       // Rising edge
       if(curr_echo_val > prev_echo_val){
-        timer_reset = 0;
+        reset_timer();
+        timer_reset_count = 0;
         start_time = TAR;
       } 
       // Falling edge
       else if(curr_echo_val < prev_echo_val){
         end_time = TAR;
-        end_time+= timer_reset*0xFFFF;
+        end_time+= timer_reset_count*0xFFFF;
         distance = (unsigned long)((end_time - start_time)/0.00583090379);
+
         //only accept values within HC-SR04 acceptible measure ranges
-        if(distance/1000 >= 2.0 && distance/1000 <= 400){
+        if(distance/10000 >= 2.0 && distance/10000 <= 400){
           write_uart_long(distance);
         }
         
-        cont = 0;
+        measurement = 0;
       }
       prev_echo_val = curr_echo_val;
     }
 
-     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset(%i)",end_time,start_time,end_time-start_time,timer_reset);
+     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset_count(%i), distance(%ld)",end_time,start_time,end_time-start_time,timer_reset_count,distance/10000);
      //write_uart_string(buffer);
 
-		wait_ms(500); // wait 0.5 second before repeating measurement
+		wait_ms(1000); // wait 0.5 second before repeating measurement
 
 	}
 
