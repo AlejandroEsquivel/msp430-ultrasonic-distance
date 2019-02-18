@@ -45,7 +45,7 @@ except:
 win = gtk.Window()
 #connect the destroy signal (clicking the x in the corner)
 win.connect("destroy", quit_app)
-win.set_default_size(400,300)
+win.set_default_size(800,800)
 
 yvals = np.zeros(50) #array to hold last 50 measurements
 times=np.arange(0,50,1.0) # 50 from 0 to 49.
@@ -53,7 +53,7 @@ times=np.arange(0,50,1.0) # 50 from 0 to 49.
 #create a plot:
 fig = Figure()
 ax = fig.add_subplot(111,xlabel='Time Step',ylabel='Distance [cm]')
-ax.set_ylim(2,200) # set limits of y axis.
+ax.set_ylim(2,400) # set limits of y axis.
 
 canvas = FigureCanvas(fig) #put the plot onto a canvas
 win.add(canvas) #put the canvas in the window
