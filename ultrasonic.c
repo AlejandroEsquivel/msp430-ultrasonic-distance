@@ -109,7 +109,6 @@ void main(void){
   unsigned long end_time;
   unsigned long distance;
 
-  char buffer[32*5 + 20];
 
 	while (1)
 	{
@@ -143,9 +142,6 @@ void main(void){
       }
       prev_echo_val = curr_echo_val;
     }
-
-     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset_count(%i), distance(%ld)",end_time,start_time,end_time-start_time,timer_reset_count,distance/10000);
-     //write_uart_string(buffer);
 
 		wait_ms(1000); // wait 0.5 second before repeating measurement
 
