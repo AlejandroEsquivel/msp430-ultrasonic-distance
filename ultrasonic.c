@@ -4,13 +4,24 @@
 #include <stdio.h>
 
 #define TRIG_PIN			BIT1 // Corresponds to P2.1
-#define ECHO_PIN			BIT0 // Corresponds to P2.0
+#define ECHO_PIN			BIT1 // Corresponds to P1.1
 
-#define TXD           BIT2 // TXD on P1.2EnableCapture
-#define RXD           BIT1 // RXD on P1.1
+#define TXD           BIT2 // TXD on P1.2
 
 volatile unsigned int timer_reset_count = 0;
+volatile unsigned int start_time;
+volatile unsigned int end_time;
+volatile unsigned int distance;
 
+char buffer[32*5 + 20];
+
+void wait_ms(unsigned int ms)
+{
+    unsigned int i;
+    for (i = 0; i<= ms; i++){
+      __delay_cycles(1000); // Clock is ~1MHz so 1E3/1E6 = 1E-3 (1ms) seconds
+    }
+}
 
 void write_uart_byte(char value){
   while (! (IFG2 & UCA0TXIFG)); // wait for TX buffer to be ready for new data
@@ -39,23 +50,43 @@ __interrupt void ta1_isr (void)
   void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) ta1_isr (void)
 #endif
 {
-  timer_reset_count++;
-  TACCTL1 &= ~CCIFG; // reset the interrupt flag
+  switch(TAIV){
+    //Timer overflow
+    case 10:
+      timer_reset_count++;
+    break;
+    //Otherwise Capture Interrupt
+    default:
+      // Read the CCI bit in CCTL0, if 0, then signal about to rise (rising edge).
+      if(CCTL0 & CCI){
+        timer_reset_count = 0;
+        start_time = CCR0;
+      } // falling edge
+      else {
+        end_time = CCR0;
+        //end_time+= timer_reset_count*0xFFFF;
+        distance = (unsigned long)((end_time - start_time)/0.00583090379);
+
+        sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset_count(%i), distance(%ld)",end_time,start_time,end_time-start_time,timer_reset_count,distance/10000);
+        write_uart_string(buffer);
+
+        //only accept values within HC-SR04 acceptible measure ranges
+        if(distance/10000 >= 2.0 && distance/10000 <= 400){
+          //write_uart_long(distance);
+          
+        }
+      }
+    break;
+  }
+  CCTL0 &= ~CCIFG; // reset the interrupt flag
 }
 
-
-void wait_ms(unsigned int ms)
-{
-    unsigned int i;
-    for (i = 0; i<= ms; i++){
-      __delay_cycles(1000); // Clock is ~1MHz so 1E3/1E6 = 1E-3 (1ms) seconds
-    }
-}
 
 
 /* Setup TRIGGER and ECHO pins */
 void init_ultrasonic_pins(void){
-	P2DIR &= ~ECHO_PIN;	// Set ECHO (P2.0) pin as INPUT
+	P1DIR &= ~ECHO_PIN;	// Set ECHO (P1.1) pin as INPUT
+  P1SEL |= ECHO_PIN; // Set P1.1 as CCI0A (Capture Input signal).
   P2DIR |= TRIG_PIN;  // Set TRIGGER (P2.1) pin as OUTPUT
 	P2OUT &= ~TRIG_PIN;	// Set TRIGGER (P2.1) pin to LOW
 }
@@ -63,12 +94,11 @@ void init_ultrasonic_pins(void){
 /* Setup UART */
 void init_uart(void){
 
+  // Set P1.2 as TXD
   P1DIR |= TXD;
   P1OUT |= TXD;
-
-  /* P1.1 = RXD, P1.2=TXD and special function enable */
-  P1SEL = RXD + TXD; 
-  P1SEL2 = RXD + TXD; 
+  P1SEL = TXD; 
+  P1SEL2 = TXD; 
 
   UCA0CTL1 |= UCSSEL_2; // Use SMCLK - 1MHz clock
   UCA0BR0 = 104; // Set baud rate to 9600 with 1MHz clock (Data Sheet 15.3.13)
@@ -78,7 +108,7 @@ void init_uart(void){
 }
 
 void init_timer(void){
-  TACCTL1 = CCIE + OUTMOD_3;     // TACCTL1 Capture Compare
+  CCTL0 |= CM_3 + SCS + CCIS_0 + CAP + CCIE + OUTMOD_3;
   TACTL |= TASSEL_2 + MC_2 + ID_0;
 }
 
@@ -102,52 +132,14 @@ void main(void){
 	// Global Interrupt Enable
 	__enable_interrupt();
 
-  unsigned int prev_echo_val = 0;
-  unsigned int curr_echo_val;
-  unsigned int measurement = 1;
-  unsigned long start_time;
-  unsigned long end_time;
-  unsigned long distance;
-
-  char buffer[32*5 + 20];
-
 	while (1)
 	{
+    // send ultrasonic pulse
 		P2OUT |= TRIG_PIN; // Enable TRIGGER
 		__delay_cycles(10); // Send pulse for 10us
 		P2OUT &= ~TRIG_PIN; // Disable TRIGGER
 
-    //enter while loop for measurement
-    measurement = 1;
-
-    while(measurement){
-      curr_echo_val = P2IN & ECHO_PIN;
-      // Rising edge
-      if(curr_echo_val > prev_echo_val){
-        reset_timer();
-        timer_reset_count = 0;
-        start_time = TAR;
-      } 
-      // Falling edge
-      else if(curr_echo_val < prev_echo_val){
-        end_time = TAR;
-        end_time+= timer_reset_count*0xFFFF;
-        distance = (unsigned long)((end_time - start_time)/0.00583090379);
-
-        //only accept values within HC-SR04 acceptible measure ranges
-        if(distance/10000 >= 2.0 && distance/10000 <= 400){
-          write_uart_long(distance);
-        }
-        
-        measurement = 0;
-      }
-      prev_echo_val = curr_echo_val;
-    }
-
-     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset_count(%i), distance(%ld)",end_time,start_time,end_time-start_time,timer_reset_count,distance/10000);
-     //write_uart_string(buffer);
-
-		wait_ms(1000); // wait 0.5 second before repeating measurement
+		wait_ms(1000); // wait 1 second before repeating measurement
 
 	}
 
