@@ -8,10 +8,11 @@
 
 #define TXD           BIT2 // TXD on P1.2
 
-volatile unsigned int timer_reset_count = 0;
-volatile unsigned int start_time;
-volatile unsigned int end_time;
-volatile unsigned int distance;
+volatile unsigned long start_time;
+volatile unsigned long end_time;
+volatile unsigned long delta_time;
+volatile unsigned long distance;
+volatile unsigned int ignore_measurement = 0;
 
 char buffer[32*5 + 20];
 
@@ -44,41 +45,43 @@ void write_uart_long(unsigned long l) {
 
 /* If Timer counts to zero before end_time recorded */
 #if defined(__TI_COMPILER_VERSION__)
-#pragma vector=TIMER0_A1_VECTOR
+#pragma vector=TIMER0_A0_VECTOR
 __interrupt void ta1_isr (void)
 #else
-  void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) ta1_isr (void)
+  void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) ta1_isr (void)
 #endif
 {
+  char buffer[32*5 + 20];
   switch(TAIV){
     //Timer overflow
     case 10:
-      timer_reset_count++;
     break;
     //Otherwise Capture Interrupt
     default:
-      // Read the CCI bit in CCTL0, if 0, then signal about to rise (rising edge).
+      // Read the CCI bit (ECHO) in CCTL0, if 0, then signal about to rise (rising edge).
       if(CCTL0 & CCI){
-        timer_reset_count = 0;
         start_time = CCR0;
       } // falling edge
       else {
         end_time = CCR0;
-        //end_time+= timer_reset_count*0xFFFF;
-        distance = (unsigned long)((end_time - start_time)/0.00583090379);
-
-        sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset_count(%i), distance(%ld)",end_time,start_time,end_time-start_time,timer_reset_count,distance/10000);
-        write_uart_string(buffer);
+        delta_time = end_time - start_time;
+        distance = (unsigned long)(delta_time/0.00583090379);
 
         //only accept values within HC-SR04 acceptible measure ranges
-        if(distance/10000 >= 2.0 && distance/10000 <= 400){
-          //write_uart_long(distance);
+        if(ignore_measurement ==0 && distance/10000 >= 2.0 && distance/10000 <= 400){
+          write_uart_long(distance);  
+        } else if(ignore_measurement==1){
+          //clear ignore measurment flag
+          ignore_measurement = 0;
           
+        } else if(delta_time >= 40000){ 
+          //Ignore next measurment if ECHO signal timed out.
+          ignore_measurement = 1;
         }
       }
     break;
   }
-  CCTL0 &= ~CCIFG; // reset the interrupt flag
+  TACTL &= ~CCIFG; // reset the interrupt flag
 }
 
 
@@ -97,8 +100,8 @@ void init_uart(void){
   // Set P1.2 as TXD
   P1DIR |= TXD;
   P1OUT |= TXD;
-  P1SEL = TXD; 
-  P1SEL2 = TXD; 
+  P1SEL |= TXD; 
+  P1SEL2 |= TXD; 
 
   UCA0CTL1 |= UCSSEL_2; // Use SMCLK - 1MHz clock
   UCA0BR0 = 104; // Set baud rate to 9600 with 1MHz clock (Data Sheet 15.3.13)
@@ -108,7 +111,8 @@ void init_uart(void){
 }
 
 void init_timer(void){
-  CCTL0 |= CM_3 + SCS + CCIS_0 + CAP + CCIE + OUTMOD_3;
+  TACTL = MC_0;
+  CCTL0 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
   TACTL |= TASSEL_2 + MC_2 + ID_0;
 }
 
@@ -131,16 +135,15 @@ void main(void){
 
 	// Global Interrupt Enable
 	__enable_interrupt();
+  while(1){
+    	// send ultrasonic pulse
+    reset_timer();
+    P2OUT |= TRIG_PIN; // Enable TRIGGER
+    __delay_cycles(10); // Send pulse for 10us
+    P2OUT &= ~TRIG_PIN; // Disable TRIGGER
+    wait_ms(500);
+  }
 
-	while (1)
-	{
-    // send ultrasonic pulse
-		P2OUT |= TRIG_PIN; // Enable TRIGGER
-		__delay_cycles(10); // Send pulse for 10us
-		P2OUT &= ~TRIG_PIN; // Disable TRIGGER
-
-		wait_ms(1000); // wait 1 second before repeating measurement
-
-	}
+  
 
 }
