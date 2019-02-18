@@ -14,8 +14,6 @@ volatile unsigned long delta_time;
 volatile unsigned long distance;
 volatile unsigned int ignore_measurement = 0;
 
-char buffer[32*5 + 20];
-
 void wait_ms(unsigned int ms)
 {
     unsigned int i;
@@ -66,15 +64,17 @@ __interrupt void ta1_isr (void)
         end_time = CCR0;
         delta_time = end_time - start_time;
         distance = (unsigned long)(delta_time/0.00583090379);
-
+        
+        sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), distance(%ld)",end_time,start_time,end_time-start_time,distance/10000);
+        write_uart_string(buffer);
+     
         //only accept values within HC-SR04 acceptible measure ranges
         if(ignore_measurement ==0 && distance/10000 >= 2.0 && distance/10000 <= 400){
-          write_uart_long(distance);  
+          //write_uart_long(distance);  
         } else if(ignore_measurement==1){
           //clear ignore measurment flag
           ignore_measurement = 0;
-          
-        } else if(delta_time >= 40000){ 
+        } else if(distance/10000 >= 400){ 
           //Ignore next measurment if ECHO signal timed out.
           ignore_measurement = 1;
         }
