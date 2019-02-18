@@ -74,7 +74,7 @@ __interrupt void ta1_isr (void)
         } else if(ignore_measurement==1){
           //clear ignore measurment flag
           ignore_measurement = 0;
-        } else if(distance/10000 >= 400){ 
+        } else if(distance/10000 > 400){ 
           //Ignore next measurment if ECHO signal timed out.
           ignore_measurement = 1;
         }
