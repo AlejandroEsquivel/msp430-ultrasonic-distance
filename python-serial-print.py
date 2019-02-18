@@ -1,3 +1,6 @@
+# University of British Columbia
+# Department of Physics & Astronomy
+
 #!/usr/bin/python2.7
 import serial # for serial port
 import numpy as np # for arrays, numerical processing
@@ -23,6 +26,6 @@ ser.flushInput()
 while(1): #loop forever
     data = ser.readline() # look for a character from serial port - will wait for up to 50ms (specified above in timeout)
     if len(data) > 0: #was there a byte to read?
-        val = float(data)/1000;
+        val = float(data)/10000;
         if(val >0):
             print val;

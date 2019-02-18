@@ -9,7 +9,7 @@
 #define TXD           BIT2 // TXD on P1.2EnableCapture
 #define RXD           BIT1 // RXD on P1.1
 
-unsigned int multiples = 0;
+unsigned int timer_reset = 0;
 
 
 void write_uart_byte(char value){
@@ -31,7 +31,7 @@ void write_uart_long(unsigned long l) {
     write_uart_string(buf);
 }
 
-
+/* If Timer counts to zero before end_time recorded */
 #if defined(__TI_COMPILER_VERSION__)
 #pragma vector=TIMER0_A1_VECTOR
 __interrupt void ta1_isr (void)
@@ -39,7 +39,7 @@ __interrupt void ta1_isr (void)
   void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) ta1_isr (void)
 #endif
 {
-  multiples++;
+  timer_reset++;
   TACCTL1 &= ~CCIFG; // reset the interrupt flag
 }
 
@@ -119,14 +119,14 @@ void main(void){
       curr_echo_val = P2IN & ECHO_PIN;
       // Rising edge
       if(curr_echo_val > prev_echo_val){
-        multiples = 0;
+        timer_reset = 0;
         start_time = TAR;
-      } // Falling edge
+      } 
+      // Falling edge
       else if(curr_echo_val < prev_echo_val){
         end_time = TAR;
-        end_time+= multiples*0xFFFF;
-        //write_uart(multiples);
-        distance = (unsigned long)((end_time - start_time)/0.0583090379);
+        end_time+= timer_reset*0xFFFF;
+        distance = (unsigned long)((end_time - start_time)/0.00583090379);
         //only accept values within HC-SR04 acceptible measure ranges
         if(distance/1000 >= 2.0 && distance/1000 <= 400){
           write_uart_long(distance);
@@ -137,10 +137,10 @@ void main(void){
       prev_echo_val = curr_echo_val;
     }
 
-     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), Multiples(%i)",end_time,start_time,end_time-start_time,multiples);
+     //sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), timer_reset(%i)",end_time,start_time,end_time-start_time,timer_reset);
      //write_uart_string(buffer);
 
-		wait_ms(500); // wait 1 second before repeating measurement
+		wait_ms(500); // wait 0.5 second before repeating measurement
 
 	}
 

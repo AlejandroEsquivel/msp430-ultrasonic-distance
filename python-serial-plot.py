@@ -1,3 +1,6 @@
+# University of British Columbia
+# Department of Physics & Astronomy
+
 #!/usr/bin/python2.7
 import serial # for serial port
 import numpy as np # for arrays, numerical processing
@@ -64,14 +67,13 @@ win.set_title("ready to receive data");
 
 line, = ax.plot(times,yvals)
 #open a data file for the output
-outFile = open("time_and_temp.txt","w")
 start_time = time()
 ser.flushInput()
 
 while(1): #loop forever
     data = ser.readline() # look for a character from serial port, will wait up to timeout above.
     if (len(data) > 0): #was there a byte to read? should always be true.
-        val = float(data)/1000;
+        val = float(data)/10000;
         print val;
         yvals = np.roll(yvals,-1) # shift the values in the array
         yvals[49] = val # take the value of the byte
