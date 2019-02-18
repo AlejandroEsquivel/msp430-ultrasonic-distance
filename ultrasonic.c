@@ -14,8 +14,6 @@ volatile unsigned long delta_time;
 volatile unsigned long distance;
 volatile unsigned int ignore_measurement = 0;
 
-char buffer[32*5 + 20];
-
 void wait_ms(unsigned int ms)
 {
     unsigned int i;
@@ -51,7 +49,6 @@ __interrupt void ta1_isr (void)
   void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) ta1_isr (void)
 #endif
 {
-  char buffer[32*5 + 20];
   switch(TAIV){
     //Timer overflow
     case 10:
