@@ -10,7 +10,7 @@ The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
 
 The `P1.1` pin was connected in series with a 1kOhm resistor and to the HC-SR04's ECHO pin.
 
-## (Default) Manual rising/falling edge detection & TAR counter [no-capture branch]
+## Manual rising/falling edge detection & TAR counter [no-capture branch]
 
 The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
 
