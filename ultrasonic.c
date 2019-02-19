@@ -47,7 +47,6 @@ void write_uart_long(unsigned long l)
   write_uart_string(buf);
 }
 
-/* If Timer counts to zero before end_time recorded */
 #if defined(__TI_COMPILER_VERSION__)
 #pragma vector = TIMER0_A0_VECTOR
 __interrupt void ta1_isr(void)
@@ -59,14 +58,15 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
   {
   //Timer overflow
   case 10:
-    break;
+  break;
   //Otherwise Capture Interrupt
   default:
-    // Read the CCI bit (ECHO) in CCTL0, if 0, then signal about to rise (rising edge).
+    // Read the CCI bit (ECHO signal) in CCTL0
+    // If ECHO is HIGH then start counting (rising edge)
     if (CCTL0 & CCI)
     {
       start_time = CCR0;
-    } // falling edge
+    } // If ECHO is LOW then stop counting (falling edge)
     else
     {
       end_time = CCR0;
@@ -122,7 +122,7 @@ void init_uart(void)
 
 void init_timer(void)
 {
-  TACTL = MC_0;
+  TACTL = MC_0; // Stop timer before modifiying configuration
   CCTL0 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
   TACTL |= TASSEL_2 + MC_2 + ID_0;
 }
