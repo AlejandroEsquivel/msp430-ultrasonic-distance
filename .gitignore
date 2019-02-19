@@ -7,3 +7,4 @@ uart.*
 *.elf
 .vscode/
 *.txt
+Icon

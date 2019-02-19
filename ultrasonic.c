@@ -19,14 +19,16 @@ void wait_ms(unsigned int ms)
   unsigned int i;
   for (i = 0; i <= ms; i++)
   {
-    __delay_cycles(1000); // Clock is ~1MHz so 1E3/1E6 = 1E-3 (1ms) seconds
+    // Clock is ~1MHz so 1E3/1E6 = 1E-3 (1ms) seconds
+    __delay_cycles(1000);
   }
 }
 
 /* Write byte to USB-Serial interface */
 void write_uart_byte(char value)
 {
-  while (!(IFG2 & UCA0TXIFG));
+  while (!(IFG2 & UCA0TXIFG))
+    ;
   // wait for TX buffer to be ready for new data
   // UCA0TXIFG register will be truthy when available to recieve new data to computer.
   UCA0TXBUF = value;
@@ -44,8 +46,11 @@ void write_uart_string(char *str)
 
 void write_uart_long(unsigned long l)
 {
+  //allocate memory for string representation of long
   char buf[sizeof(l) * 8 + 1];
+  //convert long to string
   sprintf(buf, "%ld\n", l);
+  //write string over UART
   write_uart_string(buf);
 }
 
@@ -60,7 +65,7 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
   {
   //Timer overflow
   case 10:
-  break;
+    break;
   //Otherwise Capture Interrupt
   default:
     // Read the CCI bit (ECHO signal) in CCTL0
@@ -87,7 +92,7 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
       }
       else if (distance > 400)
       {
-        //Ignore next measurement if ECHO signal timed out 
+        //Ignore next measurement if ECHO signal timed out
         //as the delayed ultrasonic pulse might come during next measurement.
         //- this should be removed if the sensor is not in an environment that
         //- will mostly provide measurements within the range [2,400] cm.
@@ -103,10 +108,14 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
 /* Setup TRIGGER and ECHO pins */
 void init_ultrasonic_pins(void)
 {
-  P1DIR &= ~ECHO_PIN; // Set ECHO (P1.1) pin as INPUT
-  P1SEL |= ECHO_PIN;  // Set P1.1 as CCI0A (Capture Input signal).
-  P2DIR |= TRIG_PIN;  // Set TRIGGER (P2.1) pin as OUTPUT
-  P2OUT &= ~TRIG_PIN; // Set TRIGGER (P2.1) pin to LOW
+  // Set ECHO (P1.1) pin as INPUT
+  P1DIR &= ~ECHO_PIN;
+  // Set P1.1 as CCI0A (Capture Input signal).
+  P1SEL |= ECHO_PIN;
+  // Set TRIGGER (P2.1) pin as OUTPUT
+  P2DIR |= TRIG_PIN;
+  // Set TRIGGER (P2.1) pin to LOW
+  P2OUT &= ~TRIG_PIN;
 }
 
 /* Setup UART */
@@ -119,16 +128,28 @@ void init_uart(void)
   P1SEL |= TXD;
   P1SEL2 |= TXD;
 
-  UCA0CTL1 |= UCSSEL_2; // Use SMCLK - 1MHz clock
-  UCA0BR0 = 104;        // Set baud rate to 9600 with 1MHz clock (Data Sheet 15.3.13)
-  UCA0BR1 = 0;          // Set baud rate to 9600 with 1MHz clock
-  UCA0MCTL = UCBRS0;    // Modulation UCBRSx = 1
-  UCA0CTL1 &= ~UCSWRST; // Initialize USCI state machine - enable
+  // Use SMCLK - 1MHz clock
+  UCA0CTL1 |= UCSSEL_2;
+  // Set baud rate to 9600 with 1MHz clock (Data Sheet 15.3.13)
+  UCA0BR0 = 104;
+  // Set baud rate to 9600 with 1MHz clock
+  UCA0BR1 = 0;
+  // Modulation UCBRSx = 1
+  UCA0MCTL = UCBRS0;
+  // Initialize USCI state machine - enable
+  UCA0CTL1 &= ~UCSWRST;
 }
 
 void init_timer(void)
 {
-  TACTL = MC_0; // Stop timer before modifiying configuration
+  /* Use internal calibrated 1MHz clock: */
+  BCSCTL1 = CALBC1_1MHZ; // Set range
+  DCOCTL = CALDCO_1MHZ;
+  BCSCTL2 &= ~(DIVS_3); // SMCLK = DCO = 1MHz
+
+  // Stop timer before modifiying configuration
+  TACTL = MC_0;
+
   /* 
   1. Capture Rising & Falling edge of ECHO signal
   2. Sync with clock
@@ -143,18 +164,14 @@ void init_timer(void)
 
 void reset_timer(void)
 {
+  //Clear timer 
   TACTL |= TACLR;
 }
 
 void main(void)
 {
-
-  WDTCTL = WDTPW + WDTHOLD; // Stop Watch Dog Timer
-
-  /* Use internal calibrated 1MHz clock: */
-  BCSCTL1 = CALBC1_1MHZ; // Set range
-  DCOCTL = CALDCO_1MHZ;
-  BCSCTL2 &= ~(DIVS_3); // SMCLK = DCO = 1MHz
+  // Stop Watch Dog Timer
+  WDTCTL = WDTPW + WDTHOLD; 
 
   init_ultrasonic_pins();
   init_uart();
@@ -167,9 +184,13 @@ void main(void)
   {
     // send ultrasonic pulse
     reset_timer();
-    P2OUT |= TRIG_PIN;  // Enable TRIGGER
-    __delay_cycles(10); // Send pulse for 10us
-    P2OUT &= ~TRIG_PIN; // Disable TRIGGER
-    wait_ms(500); // wait 500ms until next measurement
+    // Enable TRIGGER
+    P2OUT |= TRIG_PIN;  
+    // Send pulse for 10us
+    __delay_cycles(10); 
+    // Disable TRIGGER
+    P2OUT &= ~TRIG_PIN; 
+    // wait 500ms until next measurement
+    wait_ms(500);       
   }
 }

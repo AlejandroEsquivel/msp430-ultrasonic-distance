@@ -15,12 +15,17 @@ port = "/dev/ttyACM1"  #for Linux
 #port = "COM5" #For Windows?
 #port = "/dev/tty.uart-XXXX" #For Mac?
 
+outFile = open("time_and_temp.txt","w")
+
 #function that gets called when a key is pressed:
+# press 'm' to make a measurement
 def press(event):
     print('press', event.key)
     if event.key == 'q':
         print ('got q!')
         quit_app(None)
+    if event.key == 'm':
+        outFile.write(str(time()-start_time)+" "+str(yvals[49])+"\n") #write to file
     return True
     
 def quit_app(event):
@@ -67,6 +72,7 @@ win.set_title("ready to receive data");
 
 line, = ax.plot(times,yvals)
 #open a data file for the output
+outFile = open("distance_vs_time.txt","w")
 start_time = time()
 ser.flushInput()
 
@@ -77,6 +83,7 @@ while(1): #loop forever
         print val;
         yvals = np.roll(yvals,-1) # shift the values in the array
         yvals[49] = val # take the value of the byte
+        outFile.write(str(time()-start_time)+" "+str(yvals[49])+"\n") #write to file
         line.set_ydata(yvals) # draw the line
         fig.canvas.draw() # update the canvas
         win.set_title("Distance")
