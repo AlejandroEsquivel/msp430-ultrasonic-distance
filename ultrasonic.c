@@ -23,6 +23,7 @@ void wait_ms(unsigned int ms)
   }
 }
 
+/* Write byte to USB-Serial interface */
 void write_uart_byte(char value)
 {
   while (!(IFG2 & UCA0TXIFG));
@@ -36,6 +37,7 @@ void write_uart_string(char *str)
   unsigned int i = 0;
   while (str[i] != '\0')
   {
+    //write string byte by byte
     write_uart_byte(str[i++]);
   }
 }
@@ -80,12 +82,16 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
       }
       else if (ignore_measurement == 1)
       {
-        //clear ignore measurment flag
+        //clear ignore measurement flag
         ignore_measurement = 0;
       }
       else if (distance > 400)
       {
-        //Ignore next measurment if ECHO signal timed out.
+        //Ignore next measurement if ECHO signal timed out 
+        //as the delayed ultrasonic pulse might come during next measurement.
+        //- this should be removed if the sensor is not in an environment that
+        //- will mostly provide measurements within the range [2,400] cm.
+        //- also, should be removed if wait interval (500ms) is reduced.
         ignore_measurement = 1;
       }
     }
@@ -123,7 +129,15 @@ void init_uart(void)
 void init_timer(void)
 {
   TACTL = MC_0; // Stop timer before modifiying configuration
+  /* 
+  1. Capture Rising & Falling edge of ECHO signal
+  2. Sync with clock
+  3. Set Capture Input signal to CCI0A
+  4. Enable capture mode
+  5. Enable interrupt
+  */
   CCTL0 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
+  // Select SMCLK with no divisions, continous mode.
   TACTL |= TASSEL_2 + MC_2 + ID_0;
 }
 
@@ -156,6 +170,6 @@ void main(void)
     P2OUT |= TRIG_PIN;  // Enable TRIGGER
     __delay_cycles(10); // Send pulse for 10us
     P2OUT &= ~TRIG_PIN; // Disable TRIGGER
-    wait_ms(500);
+    wait_ms(500); // wait 500ms until next measurement
   }
 }
