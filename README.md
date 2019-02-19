@@ -4,6 +4,14 @@ The MSP430 (MSP430g2553) was used to create an ultrasonic (HC-SR04) distance met
 
 # Connections
 
+## (Default) Capture Mode Approach [master branch]
+
+The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
+
+The `P1.1` pin was connected in series with a 1kOhm resistor and to the HC-SR04's ECHO pin.
+
+## (Default) Manual rising/falling edge detection & TAR counter [no-capture branch]
+
 The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
 
 The `P2.0` pin was connected in series with a 1kOhm resistor and to the HC-SR04's ECHO pin.
@@ -21,6 +29,13 @@ Where `^D` is [CTRL-D].
 The MSP430 should start sending distance measurements to the host computer.
 
 If you don't have a msp430 C compiler, look at `Installation of Dependencies` below.
+
+# Plot Distance
+
+See a real time plot of the distance measurements being transmitted via USB.
+```
+python python-serial-plot.py
+```
 
 # Installation of Dependencies
 
