@@ -25,7 +25,8 @@ void wait_ms(unsigned int ms)
 
 void write_uart_byte(char value)
 {
-  while (!(IFG2 & UCA0TXIFG));
+  while (!(IFG2 & UCA0TXIFG))
+    ;
   // wait for TX buffer to be ready for new data
   // UCA0TXIFG register will be truthy when available to recieve new data to computer.
   UCA0TXBUF = value;
@@ -61,35 +62,42 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
   //Timer overflow
   case 10:
     break;
-    //Otherwise Capture Interrupt
-    default:
-      // Read the CCI bit (ECHO) in CCTL0, if 0, then signal about to rise (rising edge).
-      if(CCTL0 & CCI){
-        start_time = CCR0;
-      } // falling edge
-      else {
-        end_time = CCR0;
-        delta_time = end_time - start_time;
-        distance = (unsigned long)(delta_time/0.00583090379);
-        
-        sprintf(buffer,"End (%ld), Start(%ld), Delta(%ld), distance(%ld)",end_time,start_time,end_time-start_time,distance/10000);
-        write_uart_string(buffer);
-     
-        //only accept values within HC-SR04 acceptible measure ranges
-        if(ignore_measurement ==0 && distance/10000 >= 2.0 && distance/10000 <= 400){
-          //write_uart_long(distance);  
-        } else if(ignore_measurement==1){
-          //clear ignore measurment flag
-          ignore_measurement = 0;
-        } else if(distance/10000 > 400){ 
-          //Ignore next measurment if ECHO signal timed out.
-          ignore_measurement = 1;
-        }
+  //Otherwise Capture Interrupt
+  default:
+    // Read the CCI bit (ECHO) in CCTL0, if 0, then signal about to rise (rising edge).
+    if (CCTL0 & CCI)
+    {
+      start_time = CCR0;
+    } // falling edge
+    else
+    {
+      end_time = CCR0;
+      delta_time = end_time - start_time;
+      distance = (unsigned long)(delta_time / 0.00583090379);
+
+      sprintf(buffer, "End (%ld), Start(%ld), Delta(%ld), distance(%ld)", end_time, start_time, end_time - start_time, distance / 10000);
+      write_uart_string(buffer);
+
+      //only accept values within HC-SR04 acceptible measure ranges
+      if (ignore_measurement == 0 && distance / 10000 >= 2.0 && distance / 10000 <= 400)
+      {
+        //write_uart_long(distance);
+      }
+      else if (ignore_measurement == 1)
+      {
+        //clear ignore measurment flag
+        ignore_measurement = 0;
+      }
+      else if (distance / 10000 > 400)
+      {
+        //Ignore next measurment if ECHO signal timed out.
+        ignore_measurement = 1;
       }
     }
-    break;
   }
-  TACTL &= ~CCIFG; // reset the interrupt flag
+  break;
+}
+TACTL &= ~CCIFG; // reset the interrupt flag
 }
 
 /* Setup TRIGGER and ECHO pins */
