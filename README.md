@@ -4,6 +4,8 @@ The MSP430 (MSP430g2553) was used to create an ultrasonic (HC-SR04) distance met
 
 # Connections
 
+There were two different approaches of implementing the distance sensor as they have different connections, below indicates which branch contains the code for the respective connections.
+
 ## (Default) Capture Mode Approach [master branch]
 
 The `P2.1` MSP430 pin was connected to the HC-SR04's TRIGGER pin.
