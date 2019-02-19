@@ -26,7 +26,7 @@ ser.flushInput()
 while(1): #loop forever
     data = ser.readline() # look for a character from serial port - will wait for up to 50ms (specified above in timeout)
     if len(data) > 0: #was there a byte to read?
-        #print data;
-        val = float(data)/10000;
-        if(val >0):
-            print val;
+        print data;
+        #val = float(data)/10000;
+        #if(val >0):
+        #    print val;
