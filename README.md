@@ -104,7 +104,7 @@ TACCTL0 = CM_3 + SCS + CCIS_0 + CAP + CCIE;
 ```
 
 Which configures the Timer to capture the rising and falling edge of the Echo signal (CM_3), set the capture input signal to CCI0A/P1.1 (CCIS_0), enables capture mode (CAP), and enables interrupts (CCIE).
-Now, when an Echo signal is received via pin P1.1, two interrupts will be fired, once when there is a rising edge and another when there is a falling edge. Each time the interrupts are fired, the internal time counter TAR is copied to the TACCR0 register, which can be stored then subtracted to give us $\Delta t$ (the time it took for wave to travel to and back from some object). During each interrupt the special register TAIV indicates the source of the interrupt was (capture input, timer overflow [timer counted to 0]), furthermore the CCI bit in the TACCTL0 gives us the capture input value (P1.1 value) which can help us distinguish between a rising/falling edge.
+Now, when an Echo signal is received via pin P1.1, two interrupts will be fired, once when there is a rising edge and another when there is a falling edge. Each time the interrupts are fired, the internal time counter TAR is copied to the TACCR0 register, which can be stored then subtracted to give us the time it took for an ultrasonic pulse to travel to and back from some object. During each interrupt the special register TAIV indicates the source of the interrupt was (capture input, timer overflow [timer counted to 0]), furthermore the CCI bit in the TACCTL0 gives us the capture input value (P1.1 value) which can help us distinguish between a rising/falling edge.
 
 As the master clock of the MSP430 runs at ~1MHz, we can use the command
 `__delay_cycles(10);`
