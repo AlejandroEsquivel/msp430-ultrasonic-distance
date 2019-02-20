@@ -71,8 +71,6 @@ win.show_all()
 win.set_title("ready to receive data");
 
 line, = ax.plot(times,yvals)
-#open a data file for the output
-outFile = open("distance_vs_time.txt","w")
 start_time = time()
 ser.flushInput()
 
