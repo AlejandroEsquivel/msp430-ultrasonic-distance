@@ -11,11 +11,11 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 
 #define the serial port. Pick one:
-port = "/dev/ttyACM1"  #for Linux
+port = "/dev/ttyACM0"  #for Linux
 #port = "COM5" #For Windows?
 #port = "/dev/tty.uart-XXXX" #For Mac?
 
-outFile = open("time_and_temp.txt","w")
+outFile = open("distance_vs_time.txt","a")
 
 #function that gets called when a key is pressed:
 # press 'm' to make a measurement

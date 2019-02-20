@@ -12,7 +12,6 @@ volatile unsigned long start_time;
 volatile unsigned long end_time;
 volatile unsigned long delta_time;
 volatile unsigned long distance;
-volatile unsigned int ignore_measurement = 0;
 
 void wait_ms(unsigned int ms)
 {
@@ -81,23 +80,9 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) ta1_isr(void)
       distance = (unsigned long)(delta_time / 0.00583090379);
 
       //only accept values within HC-SR04 acceptible measure ranges
-      if (ignore_measurement == 0 && distance / 10000 >= 2.0 && distance / 10000 <= 400)
+      if (distance / 10000 >= 2.0 && distance / 10000 <= 400)
       {
         write_uart_long(distance);
-      }
-      else if (ignore_measurement == 1)
-      {
-        //clear ignore measurement flag
-        ignore_measurement = 0;
-      }
-      else if (distance > 400)
-      {
-        //Ignore next measurement if ECHO signal timed out
-        //as the delayed ultrasonic pulse might come during next measurement.
-        //- this should be removed if the sensor is not in an environment that
-        //- will mostly provide measurements within the range [2,400] cm.
-        //- also, should be removed if wait interval (500ms) is reduced.
-        ignore_measurement = 1;
       }
     }
     break;
