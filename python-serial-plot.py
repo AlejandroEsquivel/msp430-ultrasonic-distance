@@ -84,7 +84,7 @@ while(1): #loop forever
         current_time = time() - start_time;
         line.set_ydata(yvals) # draw the line
         fig.canvas.draw() # update the canvas
-        win.set_title("Distance")
+        win.set_title("Distance: "+str(current_distance)+"cm")
     while gtk.events_pending():	#makes sure the GUI updates
         gtk.main_iteration()
 #    sleep(.05) # don't eat the cpu. This delay limits the data rate to ~ 200 samples/s
