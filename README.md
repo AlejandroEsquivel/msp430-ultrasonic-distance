@@ -2,7 +2,7 @@
 
 The MSP430 (MSP430g2553) was used to create an ultrasonic (HC-SR04) distance meter, the distance measurements are sent via USB-Serial interface to the host computer using UART.
 
-For a full explanation of the relevant MSP430 components and HC-SR04 ultrasonic sensor with relevant diagrams see [here](Writeup.pdf)
+For a full explanation of how the code works with relevant diagrams see [here](Writeup.pdf)
 
 # Connections
 
