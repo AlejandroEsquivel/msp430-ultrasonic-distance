@@ -37,6 +37,6 @@ If you don't have a msp430 C compiler, see [Installation of Dependencies](DEPEND
 See a real time plot of the distance measurements being transmitted via USB.
 ```
 python python-serial-plot.py
-``
+```
 
 Note: some dependencies required, see [Installation of Dependencies](DEPENDENCIES.md)
