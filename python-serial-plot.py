@@ -25,7 +25,7 @@ def press(event):
         print ('got q!')
         quit_app(None)
     if event.key == 'm':
-        outFile.write(str(time()-start_time)+" "+str(yvals[49])+"\n") #write to file
+        outFile.write(str(current_time)+" "+str(current_distance)+"\n") #write to file
     return True
     
 def quit_app(event):
@@ -79,11 +79,11 @@ ser.flushInput()
 while(1): #loop forever
     data = ser.readline() # look for a character from serial port, will wait up to timeout above.
     if (len(data) > 0): #was there a byte to read? should always be true.
-        val = float(data)/10000;
-        print val;
+        current_distance = float(data)/10000;
+        print(current_distance);
         yvals = np.roll(yvals,-1) # shift the values in the array
-        yvals[49] = val # take the value of the byte
-        outFile.write(str(time()-start_time)+" "+str(yvals[49])+"\n") #write to file
+        yvals[49] = current_distance # take the value of the byte
+        current_time = time() - start_time;
         line.set_ydata(yvals) # draw the line
         fig.canvas.draw() # update the canvas
         win.set_title("Distance")
